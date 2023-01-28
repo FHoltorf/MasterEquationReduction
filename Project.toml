@@ -1,0 +1,32 @@
+name = "MasterEquation"
+uuid = "a178eab7-baa3-47ab-8ec1-30926059269f"
+authors = ["Flemming Holtorf"]
+version = "0.1.0"
+
+[deps]
+ADNLPModels = "54578032-b7ea-4c30-94aa-7cbd1cce6c9a"
+BlockDiagonals = "0a1fb500-61f7-11e9-3c65-f5ef3456f9f0"
+CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
+DecFP = "55939f99-70c6-5e9b-8bb0-5071ed7d61fd"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+InfiniteOpt = "20393b10-9daf-11e9-18c9-8db751c92c57"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+LSODA = "7f56f5a3-f504-529b-bc02-0b1fe5e64312"
+Lux = "b2108857-7c20-44ae-9111-449ecde12c47"
+NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
+NLPModelsIpopt = "f4238b75-b362-5c4c-b852-0801c9a21d71"
+Polyhedra = "67491407-f73d-577b-9b50-8179a7c68029"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+Sundials = "c3572dad-4567-51f8-b174-8c6c989267f4"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
