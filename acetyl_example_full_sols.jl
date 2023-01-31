@@ -4,6 +4,7 @@ Pkg.activate(".")
 
 using FileIO
 
+#=
 T_range = range(1000, 1500, step=50) 
 p_range = 10 .^ range(-2, 0, length=3)
 ω_range = 10 .^ range(-2, 9, length=12)
@@ -16,6 +17,7 @@ u_step(t, ω) = 1
 control_signals = [u_exp_increase, u_exp_decay]
 control_labels = Dict(u_exp_decay => "exp_decay",
                       u_exp_increase => "exp_increase")
+=#
 
 function analytical_sol(u,t,ω,W,Λ,Winv,Bin)
     if u == u_periodic

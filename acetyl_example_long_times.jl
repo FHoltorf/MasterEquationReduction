@@ -87,6 +87,7 @@ for Temp in T_range, Pres in p_range
 
     # cse georgievskii model
     cse_rom = CSEModel_Geo(ME, Bin, stationary_correction=false)
+    cse_rom_corr = CSEModel_Geo(ME, Bin, stationary_correction=true)
 
     # dst model
     # dst_rom = CSEModel(ME, Bin, stationary_correction=true)
@@ -102,7 +103,7 @@ for Temp in T_range, Pres in p_range
     end
 
     # bt model
-    t_int = 10 .^ range(-12, 3, length = 300)
+    t_int = 10 .^ range(-12, 3, length = 500)
     pushfirst!(t_int, 0.0)
     S = zeros(length(ME.specs), size(ME.M,2))
     for i in eachindex(ME.specs)
@@ -110,7 +111,7 @@ for Temp in T_range, Pres in p_range
     end
     C_factor = reduce(hcat, sqrt(t_int[i]-t_int[i-1])*W*Diagonal(exp.(t_int[i]*Λ))*Winv*Bin for i in 2:length(t_int))
     O_factor = reduce(hcat, sqrt(t_int[i]-t_int[i-1])*Winv'*Diagonal(exp.(t_int[i]*Λ))*W'*S' for i in 2:length(t_int))
-    T, Tinv, Σ = factor_balancing(C_factor, O_factor; rtol = 1e-40, atol = 1e-14)
+    T, Tinv, Σ = factor_balancing(C_factor, O_factor; rtol = 1e-40, atol = 1e-16)
     
     bt_roms = Dict()
     for n_modes in n_mode_range
@@ -120,6 +121,7 @@ for Temp in T_range, Pres in p_range
 
     # models to consider
     models = [cse_rom => :cse,
+              cse_rom_corr => :cse_corr,
               [val => key for (key, val) in dst_roms]...,
               [val => key for (key, val) in bt_roms]...]
     
@@ -137,14 +139,10 @@ for Temp in T_range, Pres in p_range
                 B_extended = [model.B;
                               model.D]
                 prob = ODEProblem(master_equation!, zeros(n+m), (0, horizon), (A_extended, B_extended, t -> u(t,ω)))
-                if label == :cse 
-                    rel_tol = 1e-14
-                    abs_tol = 1e-14
-                else
-                    rel_tol = 1e-14
-                    abs_tol = 1e-14
-                end
-                red_sol = solve(prob, CVODE_BDF(), dtmin=1e-24, reltol=rel_tol, abstol=abs_tol, saveat = t_range) 
+            
+                red_sol = solve(prob, CVODE_BDF(), dtmin=1e-24, 
+                                      reltol= 1e-14, abstol=1e-14, 
+                                      saveat = t_range) 
                 # tried RadauIIA5, QNDF, FBDF and CVODE_BDF
                 sol = ReducedSol(red_sol, 1:n, red_sol.t)
                 prod = ReducedSol(red_sol, n+1:n+m, red_sol.t)
@@ -156,6 +154,8 @@ for Temp in T_range, Pres in p_range
     print("\n")
 end
 
+include("acetyl_example_full_sols.jl")
+
 # full/analytical solution
 function compare(full_sol, red_sol; singularity = 0.0)
     abs_error = [norm(full_sol[i] - red_sol[i]) for i in eachindex(full_sol)]
@@ -165,17 +165,20 @@ end
 
 # visualization
 models = [:cse,
+          :cse_corr,
           [Symbol("dst_$n_mode") for n_mode in n_mode_range]...,
           [Symbol("bt_$n_mode") for n_mode in n_mode_range]...]
 
 labels = Dict(:cse => "CSE", 
+              :cse_corr => "CSE adj.",
               [Symbol("dst_$n_mode") => "DST $n_mode" for n_mode in n_mode_range]..., 
               [Symbol("bt_$n_mode") => "BT $n_mode" for n_mode in n_mode_range]...)
 
 markers = [:circle, :dtriangle, :rect, :diamond, :hexagon, :xcross, :star8]
-color = Dict(:cse => (:black, nothing), 
-             [Symbol("dst_$n_mode") => (:red, markers[i]) for (i,n_mode) in enumerate(n_mode_range)]...,
-             [Symbol("bt_$n_mode") => (:blue, markers[i]) for (i,n_mode) in enumerate(n_mode_range)]...)
+color = Dict(:cse => (:black, nothing, nothing), 
+             :cse_corr => (:black, nothing, :dash),
+             [Symbol("dst_$n_mode") => (:red, markers[i], nothing) for (i,n_mode) in enumerate(n_mode_range)]...,
+             [Symbol("bt_$n_mode") => (:blue, markers[i], nothing) for (i,n_mode) in enumerate(n_mode_range)]...)
 
 min_error = -9
 max_error = 10
@@ -207,7 +210,7 @@ for label in models
                 ME, W, Λ, Winv, Bin, S = problem_data[T,p]
                 sol, prod, model = results[T,p][label][u,ω]
                 if sol.sol.retcode == :Success
-                    if label == :cse 
+                    if label in [:cse] 
                         abs_err, rel_err = compare([S*c for c in full_sol[control_labels[u], ω][2:end]], 
                                                    [sol(t) for t in t_range[2:end]]; singularity=singularity)
                     else
@@ -261,7 +264,7 @@ for u in control_signals
             push!(plots, p)
         else
             p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], 
+                           color = color[label][1], linestyle=color[label][3], 
                            linewidth=2)
             push!(plots, p)
         end
@@ -299,7 +302,7 @@ for u in control_signals
             push!(plots, p)
         else
             p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], 
+                           color = color[label][1], linestyle=color[label][3],
                            linewidth=2)
             push!(plots, p)
         end
@@ -370,7 +373,7 @@ for u in control_signals
             push!(plots, p)
         else
             p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], 
+                           color = color[label][1], linestyle=color[label][3],
                            linewidth=2)
             push!(plots, p)
         end
@@ -407,7 +410,7 @@ for u in control_signals
             push!(plots, p)
         else
             p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], 
+                           color = color[label][1], linestyle=color[label][3],
                            linewidth=2)
             push!(plots, p)
         end
@@ -431,7 +434,7 @@ for label in models
         println("    control signal $(control_labels[u])")
         abs_prod_err[label,u] = Dict()
         rel_prod_err[label,u] = Dict()
-        for T in T_range, p in p_range
+        for T in T_range[1:5], p in p_range
             T_name = round(T, digits = 4)
             P_name = round(p, digits = 4)
             filename = "res_$(P_name)_$(T_name).jld2"
@@ -486,7 +489,7 @@ for u in control_signals
             push!(plots, p)
         else
             p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_abs_error_exp ? m : missing for m in means], 
-                           color = color[label][1], 
+                           color = color[label][1], linestyle=color[label][3],
                            linewidth=2)
             push!(plots, p)
         end
@@ -523,7 +526,7 @@ for u in control_signals
             push!(plots, p)
         else
             p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], 
+                           color = color[label][1], linestyle=color[label][3],
                            linewidth=2)
             push!(plots, p)
         end
