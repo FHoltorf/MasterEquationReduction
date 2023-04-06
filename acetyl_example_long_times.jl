@@ -78,7 +78,8 @@ for Temp in T_range, Pres in p_range
     ME, Bin = MasterEquation(M, idcs, B, F, T, iso_labels, product_labels)
     Bin *= scale
     W, Λ, Winv = compute_diagonalization(ME)
-    
+    println("Largest time scale $(-1/Λ[1])")
+
     S = zeros(length(ME.specs), size(ME.M,2))
     for i in eachindex(ME.specs)
         S[i,ME.spec_idcs[i]] .= 1
@@ -87,10 +88,8 @@ for Temp in T_range, Pres in p_range
 
     # cse georgievskii model
     cse_rom = CSEModel_Geo(ME, Bin, stationary_correction=false)
-    cse_rom_corr = CSEModel_Geo(ME, Bin, stationary_correction=true)
-
+    
     # dst model
-    # dst_rom = CSEModel(ME, Bin, stationary_correction=true)
     dst_roms = Dict()
     for n_modes in n_mode_range 
         rom = PetrovGalerkinROM(W[:,1:n_modes], W[:,n_modes+1:end], 
@@ -101,6 +100,7 @@ for Temp in T_range, Pres in p_range
                                 LiftingMap(W[:,1:n_modes], -W[:,n_modes+1:end]*Diagonal(1 ./ Λ[n_modes+1:end])*Winv[n_modes+1:end,:]*Bin))
         dst_roms[Symbol("dst_$n_modes")] = rom
     end
+    dst_pheno_rom = CSEModel(ME, Bin, stationary_correction=true)
 
     # bt model
     t_int = 10 .^ range(-12, 3, length = 500)
@@ -118,10 +118,18 @@ for Temp in T_range, Pres in p_range
         bt_rom = BalancedROM(T, Tinv, W*Diagonal(Λ)*Winv, Bin, n_modes; F = ME.F, stationary_correction=false)
         bt_roms[Symbol("bt_$n_modes")] = bt_rom
     end
-
+    bt_pheno_rom = BalancedROM(T, Tinv, W*Diagonal(Λ)*Winv, Bin, 2; F = ME.F, stationary_correction=false)
+    L = S*Tinv[:, 1:2] # c = L*z => dc/dt = L*dz/dt = L*A*L^-1 z + L*B*u
+    bt_pheno_rom.C = ME.F * W * Diagonal(1 ./ Λ) * Winv * Tinv[:,1:2]*bt_pheno_rom.A*inv(L)
+    bt_pheno_rom.D = ME.F * W * Diagonal(1 ./ Λ) * Winv * (Tinv[:,1:2]*T[1:2,:] - I)*Bin
+    bt_pheno_rom.A = L*bt_pheno_rom.A*inv(L)
+    bt_pheno_rom.B = L*bt_pheno_rom.B
+    bt_pheno_rom.lift.A .= bt_pheno_rom.lift.A*inv(L)
+    
     # models to consider
     models = [cse_rom => :cse,
-              cse_rom_corr => :cse_corr,
+              dst_pheno_rom => :dst_pheno,
+              bt_pheno_rom => :bt_pheno,
               [val => key for (key, val) in dst_roms]...,
               [val => key for (key, val) in bt_roms]...]
     
@@ -139,14 +147,15 @@ for Temp in T_range, Pres in p_range
                 B_extended = [model.B;
                               model.D]
                 prob = ODEProblem(master_equation!, zeros(n+m), (0, horizon), (A_extended, B_extended, t -> u(t,ω)))
-            
-                red_sol = solve(prob, CVODE_BDF(), dtmin=1e-24, 
-                                      reltol= 1e-14, abstol=1e-14, 
+                red_sol = solve(prob, CVODE_BDF(), dtmin=1e-24, maxiters=Int(1e6),#maxiters=Int(1e7), 
+                                      reltol = (label == :bt_pheno ? 1e-10 : 1e-14), abstol=1e-14,
                                       saveat = t_range) 
-                # tried RadauIIA5, QNDF, FBDF and CVODE_BDF
                 sol = ReducedSol(red_sol, 1:n, red_sol.t)
                 prod = ReducedSol(red_sol, n+1:n+m, red_sol.t)
                 solutions[label][u, ω] = (sol, prod, model) 
+                if red_sol.retcode != :Success
+                    println("$label did not coverge within tolerance.")
+                end
             end
         end
     end
@@ -165,34 +174,149 @@ end
 
 # visualization
 models = [:cse,
-          :cse_corr,
+          :dst_pheno,
+          :bt_pheno,
           [Symbol("dst_$n_mode") for n_mode in n_mode_range]...,
           [Symbol("bt_$n_mode") for n_mode in n_mode_range]...]
 
 labels = Dict(:cse => "CSE", 
-              :cse_corr => "CSE adj.",
+              :bt_pheno => "BT 2(P)",
+              :dst_pheno => "DST 2(P)",
               [Symbol("dst_$n_mode") => "DST $n_mode" for n_mode in n_mode_range]..., 
               [Symbol("bt_$n_mode") => "BT $n_mode" for n_mode in n_mode_range]...)
 
 markers = [:circle, :dtriangle, :rect, :diamond, :hexagon, :xcross, :star8]
-color = Dict(:cse => (:black, nothing, nothing), 
-             :cse_corr => (:black, nothing, :dash),
-             [Symbol("dst_$n_mode") => (:red, markers[i], nothing) for (i,n_mode) in enumerate(n_mode_range)]...,
-             [Symbol("bt_$n_mode") => (:blue, markers[i], nothing) for (i,n_mode) in enumerate(n_mode_range)]...)
+color = Dict(:cse => (:black, nothing, nothing, 3), 
+             :dst_pheno => (:red, nothing, :dash, 3),
+             :bt_pheno => (:blue, nothing, :dash, 3),
+             #:cse_corr => (:black, nothing, :dash),
+             [Symbol("dst_$n_mode") => (:red, markers[i], nothing, 2) for (i,n_mode) in enumerate(n_mode_range)]...,
+             [Symbol("bt_$n_mode") => (:blue, markers[i], nothing, 2) for (i,n_mode) in enumerate(n_mode_range)]...)
 
 min_error = -9
 max_error = 10
 # interesting observables/comparisons
 singularity = 0.0 # => regularization for numerical accuracy
 
-# for now compare: CSE, DST, BT
+function plot_means(t_range, error, u;
+                    xlabel = L"\text{error}", 
+                    ylabel = L"\text{time}",
+                    min_error = min_error,
+                    color = color,
+                    models = models,
+                    control_signals=control_signals,
+                    resolution = (1200,500),
+                    fontsize = 24,
+                    yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
+                    xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))), [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]))
+
+    fig = Figure(fontsize=fontsize, resolution = resolution)
+    ax = Axis(fig[1,1], xlabel = xlabel, 
+                        ylabel = ylabel, 
+                        yscale = log10, xscale=log10,
+                        yticks = yticks,
+                        yminorticksvisible = true, yminorgridvisible = true,
+                        yminorticks = IntervalsBetween(8),
+                        xticks = xticks,
+                        xminorticksvisible = true, xminorgridvisible = true,
+                        xminorticks = IntervalsBetween(8))
+    xlims!(ax, xticks[1][1], xticks[1][end]) #10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))
+    plots = []
+    plot_labels = String[]
+    for label in models
+        means = mean(error[label, u][key] for key in keys(error[label, u]))
+        if !isnothing(color[label][2])
+            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
+                                    color = color[label][1], 
+                                    marker = color[label][2],
+                                    markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
+                                    linewidth=color[label][4])
+            push!(plots, p)
+        else
+            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
+                            color = color[label][1], linestyle=color[label][3],
+                            linewidth=color[label][4])
+            push!(plots, p)
+        end
+        push!(plot_labels, labels[label])
+    end
+    Legend(fig[1,2], plots, plot_labels)
+    return fig
+end
+
+function plot_means_stds(t_range, error, u;
+                    xlabel = L"\text{error}", 
+                    ylabel = L"\text{time}",
+                    min_error = min_error,
+                    color = color,
+                    models = models,
+                    control_signals=control_signals,
+                    resolution = (1200,500),
+                    fontsize = 24,
+                    yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
+                    xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))), [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]))
+
+    fig = Figure(fontsize=fontsize, resolution = resolution)
+    ax_mean = Axis(fig[1,1], title = "means",
+                        xlabel = xlabel, 
+                        ylabel = ylabel, 
+                        yscale = log10, xscale=log10,
+                        yticks = yticks,
+                        yminorticksvisible = true, yminorgridvisible = true,
+                        yminorticks = IntervalsBetween(8),
+                        xticks = xticks,
+                        xminorticksvisible = true, xminorgridvisible = true,
+                        xminorticks = IntervalsBetween(8))
+    xlims!(ax_mean, xticks[1][1], xticks[1][end]) 
+
+    ax_std = Axis(fig[1,2], title = "standard deviations",
+                            xlabel = xlabel, 
+                            yscale = log10, xscale=log10,
+                            yticks = (yticks[1], ["" for i in eachindex(yticks[1])]),
+                            yminorticksvisible = true, yminorgridvisible = true,
+                            yminorticks = IntervalsBetween(8),
+                            xticks = xticks,
+                            xminorticksvisible = true, xminorgridvisible = true,
+                            xminorticks = IntervalsBetween(8))
+    xlims!(ax_std, xticks[1][1], xticks[1][end]) 
+
+    plots = []
+    plot_labels = String[]
+    for label in models
+        means = mean(error[label, u][key] for key in keys(error[label, u]))
+        stds = [std(error[label, u][key][i] for key in keys(error[label, u])) for i in 1:length(t_range)-1]
+        if !isnothing(color[label][2])
+            p = scatterlines!(ax_mean, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
+                                    color = color[label][1], 
+                                    marker = color[label][2],
+                                    markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
+                                    linewidth=color[label][4])
+            scatterlines!(ax_std, t_range[2:end], [s > 10.0 ^ min_error ? s : missing for s in stds], 
+                                    color = color[label][1], 
+                                    marker = color[label][2],
+                                    markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
+                                    linewidth=color[label][4])
+            push!(plots, p)
+        else
+            p = lines!(ax_mean, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
+                            color = color[label][1], linestyle=color[label][3],
+                            linewidth=color[label][4])
+            lines!(ax_std, t_range[2:end], [s > 10.0 ^ min_error ? s : missing for s in stds], 
+                            color = color[label][1], linestyle=color[label][3],
+                            linewidth=color[label][4])
+            push!(plots, p)
+        end
+        push!(plot_labels, labels[label])
+    end
+    Legend(fig[1,3], plots, plot_labels)
+    return fig
+end
 
 # rel. error in \hat{c} over time 
 # 3 plots in a row, one for each observable, trace for each model
 # -> avg (T,p) 
 # -> max/min (T,p) 
 # -> distribution (T,p)
-
 rel_macro_err = Dict()
 abs_macro_err = Dict()
 for label in models
@@ -210,7 +334,7 @@ for label in models
                 ME, W, Λ, Winv, Bin, S = problem_data[T,p]
                 sol, prod, model = results[T,p][label][u,ω]
                 if sol.sol.retcode == :Success
-                    if label in [:cse] 
+                    if label in [:cse, :dst_pheno, :bt_pheno] 
                         abs_err, rel_err = compare([S*c for c in full_sol[control_labels[u], ω][2:end]], 
                                                    [sol(t) for t in t_range[2:end]]; singularity=singularity)
                     else
@@ -227,91 +351,25 @@ for label in models
     end
 end
 
-# T = T_range[end]
-# p = p_range[end]
-# T_name = round(T, digits = 4)
-# P_name = round(p, digits = 4)
-# filename = "res_$(P_name)_$(T_name).jld2"
-# full_sol = load(joinpath("full_model_results", filename), "concentration")
-# u = u_exp_decay
-# ω = ω[end]
-# test = [norm(c) for c in full_sol[control_labels[u],ω][2:end]]
 # relative error
-for u in control_signals
-    fig = Figure(fontsize=24, resolution = (1200, 500))
-    ax = Axis(fig[1,1], xlabel = L"\text{time } t", 
-                        ylabel = L"\text{relative error }  \frac{\Vert Sc(t) - S\hat{c}(t) \Vert}{\Vert S c(t) \Vert}", 
-                        yscale = log10, xscale=log10,
-                        yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
-                        yminorticksvisible = true, yminorgridvisible = true,
-                        yminorticks = IntervalsBetween(8),
-                        xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))),
-                                [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]),
-                        xminorticksvisible = true, xminorgridvisible = true,
-                        xminorticks = IntervalsBetween(8))
-    #ylims!(ax, 1e-9, 1e2)
-    xlims!(ax, 10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))
-    plots = []
-    plot_labels = String[]
-    for label in models
-        means = mean(rel_macro_err[label, u][key] for key in keys(rel_macro_err[label, u]))
-        if !isnothing(color[label][2])
-            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                                  color = color[label][1], 
-                                  marker = color[label][2],
-                                  markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
-                                  linewidth=2)
-            push!(plots, p)
-        else
-            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], linestyle=color[label][3], 
-                           linewidth=2)
-            push!(plots, p)
-        end
-        #lines!(ax, t_range[2:end], [m > 1e-9 ? m : missing for m in test])
-        push!(plot_labels, labels[label])
-    end
-    Legend(fig[1,2], plots, plot_labels)
-    save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_macro_comparison.pdf"), fig)
-end
+u = control_signals[1]
+fig_rel_macro_err = plot_means(t_range, rel_macro_err, u,
+                            xlabel = L"\text{time } t", 
+                            ylabel = L"\text{relative error }  \frac{\Vert Sc(t) - S\hat{c}(t) \Vert}{\Vert S c(t) \Vert}")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_macro_comparison.pdf"), fig_rel_macro_err)
 
-# abs error
-for u in control_signals
-    fig = Figure(fontsize=24, resolution = (1200, 500))
-    ax = Axis(fig[1,1], xlabel = L"\text{time } t", 
-                        ylabel = L"\text{absolute error }  \Vert Sc(t) - S\hat{c}(t) \Vert", 
-                        yscale = log10, xscale=log10,
-                        yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
-                        yminorticksvisible = true, yminorgridvisible = true,
-                        yminorticks = IntervalsBetween(8),
-                        xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))),
-                                [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]),
-                        xminorticksvisible = true, xminorgridvisible = true,
-                        xminorticks = IntervalsBetween(8))
-    xlims!(ax, 10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))    
-    plots = []
-    plot_labels = String[]
-    for label in models
-        means = mean(abs_macro_err[label, u][key] for key in keys(abs_macro_err[label, u]))
-        if !isnothing(color[label][2])
-            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                                  color = color[label][1], 
-                                  marker = color[label][2],
-                                  markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
-                                  linewidth=2)
-            push!(plots, p)
-        else
-            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], linestyle=color[label][3],
-                           linewidth=2)
-            push!(plots, p)
-        end
-        push!(plot_labels, labels[label])
-    end
-    Legend(fig[1,2], plots, plot_labels)
-    save(joinpath(@__DIR__,"figures",control_labels[u]*"_abs_macro_comparison.pdf"), fig)
-end
+fig_abs_macro_err = plot_means(t_range, abs_macro_err, u,
+                                xlabel = L"\text{time } t", 
+                                ylabel = L"\text{absolute error }  \Vert Sc(t) - S\hat{c}(t) \Vert")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_abs_macro_comparison.pdf"), fig_abs_macro_err)
 
+xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))), [iseven(e) ? latexstring("10 ^ {$e}") : "" for e in range(min_time_exp, ceil(Int, log10(horizon)))])
+fig_rel_macro_err_vars = plot_means_stds(t_range, rel_macro_err, control_signals[1],
+                                resolution=(1200,500),
+                                xticks=xticks, 
+                                xlabel = L"\text{time } t", 
+                                ylabel = L"\text{relative error }  \frac{\Vert Sc(t) - S\hat{c}(t) \Vert}{\Vert S c(t) \Vert}")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_macro_comparison_vars.pdf"), fig_rel_macro_err_vars)
 
 
 # rel. error in c over time 
@@ -346,87 +404,30 @@ for label in models
     end
 end
 
-# rel error
-for u in control_signals
-    fig = Figure(fontsize=24, resolution = (1200, 500))
-    ax = Axis(fig[1,1], xlabel = L"\text{time } t", 
-                        ylabel = L"\text{relative error }  \frac{\Vert c(t) - \hat{c}(t) \Vert}{ \Vert c(t)\Vert}", 
-                        yscale = log10, xscale=log10,
-                        yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
-                        yminorticksvisible = true, yminorgridvisible = true,
-                        yminorticks = IntervalsBetween(8),
-                        xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))),
-                                [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]),
-                        xminorticksvisible = true, xminorgridvisible = true,
-                        xminorticks = IntervalsBetween(8))
-    xlims!(ax, 10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))
-    plots = []
-    plot_labels = String[]
-    for label in models
-        means = mean(rel_micro_err[label, u][key] for key in keys(rel_micro_err[label, u]))
-        if !isnothing(color[label][2])
-            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                                  color = color[label][1], 
-                                  marker = color[label][2],
-                                  markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
-                                  linewidth=2)
-            push!(plots, p)
-        else
-            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], linestyle=color[label][3],
-                           linewidth=2)
-            push!(plots, p)
-        end
-        push!(plot_labels, labels[label])
-    end
-    Legend(fig[1,2], plots, plot_labels)
-    save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_micro_comparison.pdf"), fig)
-end
+u = control_signals[1]
+fig_rel_micro_err = plot_means(t_range, rel_micro_err, u,
+                            xlabel = L"\text{time } t", 
+                            ylabel = L"\text{relative error }  \frac{\Vert c(t) - \hat{c}(t) \Vert}{\Vert c(t) \Vert}")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_micro_comparison.pdf"), fig_rel_micro_err)
 
-# abs error
-for u in control_signals
-    fig = Figure(fontsize=24, resolution = (1200, 500))
-    ax = Axis(fig[1,1], xlabel = L"\text{time } t", 
-                        ylabel = L"\text{absolute error }  \Vert c(t) - \hat{c}(t) \Vert", 
-                        yscale = log10, xscale=log10,
-                        yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
-                        yminorticksvisible = true, yminorgridvisible = true,
-                        yminorticks = IntervalsBetween(8),
-                        xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))),
-                                [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]),
-                        xminorticksvisible = true, xminorgridvisible = true,
-                        xminorticks = IntervalsBetween(8))
-    xlims!(ax, 10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))
-    plots = []
-    plot_labels = String[]
-    for label in models
-        means = mean(abs_micro_err[label, u][key] for key in keys(abs_micro_err[label, u]))
-        if !isnothing(color[label][2])
-            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                                  color = color[label][1], 
-                                  marker = color[label][2],
-                                  markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
-                                  linewidth=2)
-            push!(plots, p)
-        else
-            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], linestyle=color[label][3],
-                           linewidth=2)
-            push!(plots, p)
-        end
-        push!(plot_labels, labels[label])
-    end
-    Legend(fig[1,2], plots, plot_labels)
-    save(joinpath(@__DIR__,"figures",control_labels[u]*"_abs_micro_comparison.pdf"), fig)
-end
+fig_abs_micro_err = plot_means(t_range, abs_micro_err, u,
+                                xlabel = L"\text{time } t", 
+                                ylabel = L"\text{absolute error }  \Vert c(t) - \hat{c}(t) \Vert")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_abs_micro_comparison.pdf"), fig_abs_micro_err)
+
+xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))), [iseven(e) ? latexstring("10 ^ {$e}") : "" for e in range(min_time_exp, ceil(Int, log10(horizon)))])
+fig_rel_micro_err_vars = plot_means_stds(t_range, rel_micro_err, control_signals[1],
+                                resolution=(1200,500),
+                                xticks=xticks, 
+                                xlabel = L"\text{time } t", 
+                                ylabel = L"\text{relative error }  \frac{\Vert c(t) - \hat{c}(t) \Vert}{\Vert c(t) \Vert}")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_micro_comparison_vars.pdf"), fig_rel_micro_err_vars)
 
 # error in p over time 
 # 3 plots in a row, one for each observable, trace for each model
 # -> mean over (T,p,ω) (or any other statstic?)
-
 abs_prod_err = Dict()
 rel_prod_err = Dict()
-min_abs_error_exp = -9
 max_abs_error_exp = -10
 for label in models
     println("evaluating: $label")
@@ -434,7 +435,7 @@ for label in models
         println("    control signal $(control_labels[u])")
         abs_prod_err[label,u] = Dict()
         rel_prod_err[label,u] = Dict()
-        for T in T_range[1:5], p in p_range
+        for T in T_range, p in p_range
             T_name = round(T, digits = 4)
             P_name = round(p, digits = 4)
             filename = "res_$(P_name)_$(T_name).jld2"
@@ -443,7 +444,7 @@ for label in models
                 ME, W, Λ, Winv, Bin, S = problem_data[T,p]
                 sol, prod, model = results[T,p][label][u,ω]
                 if sol.sol.retcode == :Success
-                    if label == :cse
+                    if label in [:cse, :bt_pheno_rom, :dst_pheno_rom]
                         red_prod = [prod(t) for t in t_range[2:end]]
                     else
                         red_prod = [Float64.(evaluate_prod(BigFloat.(model.lift(sol(t),u(t,ω))),u,BigFloat(t),BigFloat(ω),W,Λ,Winv,Bin,ME.F)) for t in t_range[2:end]]
@@ -453,7 +454,6 @@ for label in models
                     abs_prod_err[label, u][T,p,ω] = abs_err
                     rel_prod_err[label, u][T,p,ω] = rel_err
                     max_abs_error_exp = max(ceil(Int,log10(maximum(abs_prod_err[label, u][T,p,ω]))), max_abs_error_exp)
-                    #min_abs_error_exp = min(ceil(Int,log10(minimum(abs_prod_err[label, u][T,p,ω]))), min_abs_error_exp)
                 else
                     println("Model $label failed at (T,p) = ($T,$p) due to $(sol.sol.retcode)")
                 end
@@ -462,113 +462,21 @@ for label in models
     end
 end
 
-# absolute error
-for u in control_signals
-    fig = Figure(fontsize=24, resolution = (1200, 500))
-    ax = Axis(fig[1,1], xlabel = L"\text{time } t", 
-                        ylabel = L"\text{absolute error }  \Vert p(t) - \hat{p}(t) \Vert", 
-                        yscale = log10, xscale=log10,
-                        yticks = (10.0 .^ range(min_abs_error_exp,max_abs_error_exp), [latexstring("10 ^ {$e}") for e in range(min_abs_error_exp,max_abs_error_exp)]),
-                        yminorticksvisible = true, yminorgridvisible = true,
-                        yminorticks = IntervalsBetween(8),
-                        xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))),
-                                  [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]),
-                        xminorticksvisible = true, xminorgridvisible = true,
-                        xminorticks = IntervalsBetween(8))
-    xlims!(ax, 10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))
-    plots = []
-    plot_labels = String[]
-    for label in models
-        means = mean(abs_prod_err[label, u][key] for key in keys(abs_prod_err[label, u]))
-        if !isnothing(color[label][2])
-            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_abs_error_exp ? m : missing for m in means], 
-                                  color = color[label][1], 
-                                  marker = color[label][2],
-                                  markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
-                                  linewidth=2)
-            push!(plots, p)
-        else
-            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_abs_error_exp ? m : missing for m in means], 
-                           color = color[label][1], linestyle=color[label][3],
-                           linewidth=2)
-            push!(plots, p)
-        end
-        push!(plot_labels, labels[label])
-    end
-    Legend(fig[1,2], plots, plot_labels)
-    save(joinpath(@__DIR__,"figures",control_labels[u]*"_abs_prod_comparison.pdf"), fig)
-end
+u = control_signals[1]
+fig_rel_prod_err = plot_means(t_range, rel_prod_err, u,
+xlabel = L"\text{time } t", 
+ylabel = L"\text{relative error }  \frac{\Vert p(t) - \hat{p}(t) \Vert}{\Vert p(t) \Vert}")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_prod_comparison.pdf"), fig_rel_prod_err)
 
-# relative error
-for u in control_signals
-    fig = Figure(fontsize=24, resolution = (1200, 500))
-    ax = Axis(fig[1,1], xlabel = L"\text{time } t", 
-                        ylabel = L"\text{relative error }  \frac{\Vert p(t) - \hat{p}(t) \Vert}{\Vert p(t) \Vert  }", 
-                        yscale = log10, xscale=log10,
-                        yticks = (10.0 .^ range(min_error,max_error), [latexstring("10 ^ {$e}") for e in range(min_error,max_error)]),
-                        yminorticksvisible = true, yminorgridvisible = true,
-                        yminorticks = IntervalsBetween(8),
-                        xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))),
-                                [latexstring("10 ^ {$e}") for e in range(min_time_exp, ceil(Int, log10(horizon)))]),
-                        xminorticksvisible = true, xminorgridvisible = true,
-                        xminorticks = IntervalsBetween(8))
-    xlims!(ax, 10.0 .^ min_time_exp, 10.0 .^ ceil(Int, log10(horizon)))
-    plots = []
-    plot_labels = String[]
-    for label in models
-        means = mean(rel_prod_err[label, u][key] for key in keys(rel_prod_err[label, u]))
-        if !isnothing(color[label][2])
-            p = scatterlines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                                  color = color[label][1], 
-                                  marker = color[label][2],
-                                  markersize = [mod(i-1, 25) == 0 ? 15 : 0 for i in 1:length(t_range)-1],
-                                  linewidth=2)
-            push!(plots, p)
-        else
-            p = lines!(ax, t_range[2:end], [m > 10.0 ^ min_error ? m : missing for m in means], 
-                           color = color[label][1], linestyle=color[label][3],
-                           linewidth=2)
-            push!(plots, p)
-        end
-        push!(plot_labels, labels[label])
-    end
-    Legend(fig[1,2], plots, plot_labels)
-    save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_prod_comparison.pdf"), fig)
-end
+fig_abs_prod_err = plot_means(t_range, abs_prod_err, u,
+xlabel = L"\text{time } t", 
+ylabel = L"\text{absolute error }  \Vert p(t) - \hat{p}(t) \Vert")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_abs_prod_comparison.pdf"), fig_abs_prod_err)
 
-#= test
-fig = Figure()
-ax = Axis(fig[1,1],xscale=log10, yscale=log10)
-for T in T_range, p in p_range, ω in ω_range[1:4]
-    T_name = round(T, digits = 4)
-    P_name = round(p, digits = 4)
-    filename = "res_$(P_name)_$(T_name).jld2"
-    full_prod = load(joinpath("full_model_results", filename), "product")
-    lines!(ax, t_range[2:end], [norm(c) for c in full_prod[control_labels[u_exp_increase], ω][2:end]])
-end
-fig
-
-fig = Figure()
-ax = Axis(fig[1,1],xscale=log10, yscale=log10)
-for T in T_range, p in p_range, ω in ω_range[1:4]
-    T_name = round(T, digits = 4)
-    P_name = round(p, digits = 4)
-    filename = "res_$(P_name)_$(T_name).jld2"
-    full_prod = load(joinpath("full_model_results", filename), "concentration")
-    lines!(ax, t_range[2:end], [norm(c) for c in full_prod[control_labels[u_exp_increase], ω][2:end]])
-end
-fig
-
-fig = Figure()
-ax = Axis(fig[1,1],xscale=log10, yscale=log10)
-for T in T_range, p in p_range, ω in ω_range[1:4]
-    T_name = round(T, digits = 4)
-    P_name = round(p, digits = 4)
-    filename = "res_$(P_name)_$(T_name).jld2"
-    full_conc = load(joinpath("full_model_results", filename), "concentration")[control_labels[u_exp_increase], ω]
-    ME, W, Λ, Winv, Bin, S = problem_data[T,p]  
-    full_prod = [evaluate_prod(Dec128.(full_conc[i]), u_exp_increase, Dec128(t_range[i]), Dec128(ω), W, Λ, Winv, Bin, ME.F) for i in 2:length(t_range)]
-    lines!(ax, t_range[2:end], [norm(c) > 1e-10 ? norm(c) : missing for c in full_prod])
-end
-fig
-=#
+xticks = (10.0 .^ range(min_time_exp, ceil(Int, log10(horizon))), [iseven(e) ? latexstring("10 ^ {$e}") : "" for e in range(min_time_exp, ceil(Int, log10(horizon)))])
+fig_rel_prod_err_vars = plot_means_stds(t_range, rel_prod_err, control_signals[1],
+                                resolution=(1200,500),
+                                xticks=xticks, 
+                                xlabel = L"\text{time } t", 
+                                ylabel = L"\text{relative error }  \frac{\Vert p(t) - \hat{p}(t) \Vert}{\Vert p(t) \Vert}")
+save(joinpath(@__DIR__,"figures",control_labels[u]*"_rel_prod_comparison_vars.pdf"), fig_rel_prod_err_vars)

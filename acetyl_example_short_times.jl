@@ -10,10 +10,8 @@ include("models/BalancingROM.jl")
 
 path = "MEdata/data_pieces_no_reverse/"
 
-# 400/0.01 is hard apparently
-
-T_range = range(1000, 1500, step=50) #[1000, 1100, 1200, 1300]
-p_range = 10 .^ range(-2, 0, length=3) #[0.01, 0.1, 1.0]
+T_range = range(1000, 1500, step=50) 
+p_range = 10 .^ range(-2, 0, length=3) 
 
 u_periodic(t, ω) = [(1 + sin(ω*t))]
 u_exp_decay(t, ω) = [ω * exp(-ω*t)]
@@ -38,7 +36,6 @@ end
 
 # computational experiments
 control_signals = [u_exp_decay]
-
 
 function evaluate_prod(c,u,t,ω,W,Λ,Winv,Bin,F)
     if u == u_periodic
@@ -106,7 +103,6 @@ for Temp in T_range, Pres in p_range
     cse_rom = CSEModel_Geo(ME, Bin, stationary_correction=false)
 
     # dst model
-    # dst_rom = CSEModel(ME, Bin, stationary_correction=true)
     dst_roms = Dict()
     for n_modes in n_mode_range 
         rom = PetrovGalerkinROM(W[:,1:n_modes], W[:,n_modes+1:end], 
@@ -175,7 +171,6 @@ labels = Dict(:cse => "CSE",
               [Symbol("bt_$n_mode") => "BT $n_mode" for n_mode in n_mode_range]...)
 
 # error vs decay rate for exponential decay
-# -> colormap (T,ω)
 rel_error = Dict()
 tested_models = [:cse, :dst_10, :bt_10]
 u = u_exp_decay
@@ -193,8 +188,8 @@ for p in p_range
         end
     end
 end
-min_err = 1e-9 #floor(minimum(values(rel_error)), sigdigits = 1)
-max_err = 1.0  #ceil(maximum(values(rel_error)), digits = 1)
+min_err = 1e-9 
+max_err = 1.0  
 
 colorticks = ([-9,-6,-3,0], vcat(latexstring("\\leq 10^{-9}"),
                                  [latexstring("10^{$e}") for e in [-6,-3]],
@@ -207,7 +202,7 @@ for p in p_range
                         xscale = log10,
                         xticks = (10.0 .^ range(-11, 0, step = 2),[latexstring("10 ^ {$e}") for e in range(-11, 0, step=2)]),
                         title = labels[model])
-        for (k,model) in enumerate(tested_models)]           
+            for (k,model) in enumerate(tested_models)]           
     T_grid = [T for T in T_range]
     ω_grid = vcat(0.999e-9,[1/ω for ω in reverse(ω_range)])
     val_grid = [rel_error[T,p,ω,:cse] for ω in reverse(ω_range), T in T_range]
@@ -224,7 +219,6 @@ for p in p_range
                 )
     P_name = round(p, digits = 4)
     save("figures/exp_decay_short_timescale_p_$P_name.pdf", fig)
-end
-#cb.axis.attributes[:scale][] = log10
-#cb.axis.attributes[:limits][] = exp10.(cb.axis.attributes[:limits][])  
-display(fig)
+    display(fig)
+end 
+

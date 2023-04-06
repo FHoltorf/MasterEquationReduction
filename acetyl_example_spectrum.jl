@@ -1,6 +1,6 @@
 cd(@__DIR__)
 using Pkg
-Pkg.activate("../../.")
+Pkg.activate(".")
 
 using DelimitedFiles, DifferentialEquations, Sundials, CairoMakie, Statistics
 include("models/MasterEquation.jl")
