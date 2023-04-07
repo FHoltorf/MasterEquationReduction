@@ -7,7 +7,7 @@ using DelimitedFiles, DifferentialEquations, FileIO, PrettyTables
 include("models/MasterEquation.jl")
 include("models/CSEROM.jl")
 include("models/BalancingROM.jl")
-path = "MEdata//data_pieces_no_reverse/"
+path = "MEdata/"
 
 # easy conditions
 io = open("phenomenological_coeffs.txt","w")

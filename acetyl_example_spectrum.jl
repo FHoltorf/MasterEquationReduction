@@ -11,7 +11,7 @@ include("models/CSCROM.jl")
 include("models/BalancingROM.jl")
 include("models/product_eval.jl")
 
-path = "MEdata//data_pieces_no_reverse/"
+path = "MEdata/"
 
 # easy conditions
 Temp = 700.0

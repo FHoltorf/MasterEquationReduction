@@ -8,25 +8,21 @@ include("models/PetrovGalerkinROM.jl")
 include("models/CSEROM.jl")
 include("models/BalancingROM.jl")
 
-path = "MEdata/data_pieces_no_reverse/"
+data_path = "MEdata/"
 
-T_range = range(1000, 1500, step=50) #[1000, 1100, 1200, 1300]
-p_range = 10 .^ range(-2, 0, length=3) #[0.01, 0.1, 1.0]
+T_range = range(1000, 1500, step=50) 
+p_range = 10 .^ range(-2, 0, length=3) 
 
-u_periodic(t, ω) = [(1 + sin(ω*t))]
 u_exp_decay(t, ω) = [ω * exp(-ω*t)]
 u_exp_increase(t, ω) = [(1-exp(-ω*t))]
-u_step(t, ω) = 1
 
 # computational experiments
-control_signals = [u_exp_increase] #u_exp_decay]
+control_signals = [u_exp_increase] 
 control_labels = Dict(u_exp_decay => "exp_decay",
                       u_exp_increase => "exp_increase")
 
 function evaluate_prod(c,u,t,ω,W,Λ,Winv,Bin,F)
-    if u == u_periodic
-        fed_material = t + 1/ω*(1 - cos(ω*t))
-    elseif u == u_exp_decay
+    if u == u_exp_decay
         fed_material = 1 - exp(-ω*t) 
     elseif u == u_exp_increase
         fed_material = t - 1/ω * (1 - exp(-ω*t))
@@ -63,14 +59,14 @@ problem_data = Dict()
 for Temp in T_range, Pres in p_range
     temperature = Temp
     pressure = Pres
-    T_name = round(Temp,digits = 4)
+    T_name = round(Temp, digits=4)
     P_name = round(Pres, digits=4)
     println("Temperature: $(Temp)K -- Pressure: $(Pres)bar")
-    M = readdlm(string(path, "M_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
-    F = readdlm(string(path, "K_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
-    B = readdlm(string(path, "B_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
-    T = readdlm(string(path, "T_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
-    idcs = readdlm(string(path, "M_", P_name, "_", T_name, "idx.csv"), ',', Float64, header=false)
+    M = readdlm(string(data_path, "M_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
+    F = readdlm(string(data_path, "K_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
+    B = readdlm(string(data_path, "B_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
+    T = readdlm(string(data_path, "T_", P_name, "_", T_name, ".csv"), ',', Float64, header=false)
+    idcs = readdlm(string(data_path, "M_", P_name, "_", T_name, "idx.csv"), ',', Float64, header=false)
 
     iso_labels = [:acetylperoxy, :hydroperoxylvinoxy]
     product_labels = [:acetyl, :ketene]

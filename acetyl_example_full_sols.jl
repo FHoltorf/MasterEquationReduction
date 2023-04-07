@@ -4,21 +4,6 @@ Pkg.activate(".")
 
 using FileIO
 
-#=
-T_range = range(1000, 1500, step=50) 
-p_range = 10 .^ range(-2, 0, length=3)
-ω_range = 10 .^ range(-2, 9, length=12)
-
-u_periodic(t, ω) = [(1 + sin(ω*t))]
-u_exp_decay(t, ω) = [ω * exp(-ω*t)]
-u_exp_increase(t, ω) = [(1-exp(-ω*t))]
-u_step(t, ω) = 1
-
-control_signals = [u_exp_increase, u_exp_decay]
-control_labels = Dict(u_exp_decay => "exp_decay",
-                      u_exp_increase => "exp_increase")
-=#
-
 function analytical_sol(u,t,ω,W,Λ,Winv,Bin)
     if u == u_periodic
         return W*Diagonal(-1 ./ Λ .* (1 .- exp.(t*Λ)) + (Λ .* sin(ω*t) .+ ω * cos(ω*t) .-  ω * exp.(t*Λ)) ./ (Λ .^ 2 .+ ω^2) )*Winv*Bin*[1] 

@@ -8,7 +8,7 @@ include("models/PetrovGalerkinROM.jl")
 include("models/CSEROM.jl")
 include("models/BalancingROM.jl")
 
-path = "MEdata/data_pieces_no_reverse/"
+path = "MEdata/"
 
 T_range = range(1000, 1500, step=50) 
 p_range = 10 .^ range(-2, 0, length=3) 
@@ -53,7 +53,7 @@ function evaluate_prod(c,u,t,ω,W,Λ,Winv,Bin,F)
 end
 
 ω_range = 10 .^ range(0, 11, length=12)
-n_mode_range = [2, 4, 6, 8, 10]
+n_mode_range = [10]
 horizon = 1e3
 n_horizon = 300
 min_time_exp = -11
