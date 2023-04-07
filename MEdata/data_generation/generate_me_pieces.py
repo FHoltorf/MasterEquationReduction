@@ -59,11 +59,11 @@ def generate_full_master_equation_LTI(network, symmetrized = False):
     # association/dissociation
     for i in range(n_isom):
         for n in range(n_prod):
-            if g_nj[n, i, n_grains - 1, 0] > 0: # wth is this?
+            if g_nj[n, i, n_grains - 1, 0] > 0: 
                 for r in range(n_grains):
                     for s in range(n_j):
                         u = indices[i, r, s] # column index -> isomer
-                        if u > -1: # when is this -1? when not?
+                        if u > -1:
                             k_mat[n,u] = g_nj[n,i,r,s] # formation of product n from isomer i,r,s
                             if n < n_reac:
                                 b_mat[u,n] = f_im[i, n, r, s] * dens_states[n + n_isom, r, s] * (2 * j_list[s] + 1) * np.exp(-e_list[r] * beta)
