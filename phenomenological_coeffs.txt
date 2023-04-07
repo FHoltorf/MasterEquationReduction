@@ -1,125 +1,125 @@
 T = 1000.0K, p = 1.0bar
-┌────────────────────┬────────────────────┬────────────┬────────────┬────────────┐
-│           reactant │            product │        CSE │   DST 2(P) │    BT 2(P) │
-├────────────────────┼────────────────────┼────────────┼────────────┼────────────┤
-│ hydroperoxylvinoxy │       acetylperoxy │  1.08451e6 │  1.08451e6 │ -3.71825e7 │
-│       acetylperoxy │ hydroperoxylvinoxy │  2.25947e5 │  2.25947e5 │  2.14472e6 │
-│       acetylperoxy │       acetylperoxy │   1.6013e6 │   1.6013e6 │ -2.67892e6 │
-│ hydroperoxylvinoxy │ hydroperoxylvinoxy │  1.12089e6 │  1.12089e6 │  4.43068e7 │
-│       acetylperoxy │             acetyl │    95628.8 │    95628.8 │ -1.31231e6 │
-│ hydroperoxylvinoxy │             acetyl │  2.73317e6 │  2.73317e6 │  1.66088e7 │
-│       acetylperoxy │             ketene │  1.29281e8 │  1.30346e8 │  1.48756e8 │
-│ hydroperoxylvinoxy │             ketene │  1.87338e7 │  1.89045e7 │  2.48507e7 │
-│          O2+acetyl │       acetylperoxy │  2.39153e9 │  2.39052e9 │  2.37104e9 │
-│          O2+acetyl │ hydroperoxylvinoxy │  1.09546e8 │  1.09322e8 │  1.04419e8 │
-│       acetylperoxy │                    │ -1.92287e6 │ -1.92287e6 │  1.84206e6 │
-│ hydroperoxylvinoxy │                    │ -4.93857e6 │ -4.93857e6 │ -2.36876e7 │
-└────────────────────┴────────────────────┴────────────┴────────────┴────────────┘
+┌────────────────────┬───────────────────────┬────────────┬────────────┬────────────┐
+│           reactant │               product │        CSE │   DST 2(P) │    BT 2(P) │
+├────────────────────┼───────────────────────┼────────────┼────────────┼────────────┤
+│ hydroperoxylvinoxy │          acetylperoxy │  1.08451e6 │  1.08451e6 │ -3.71825e7 │
+│       acetylperoxy │    hydroperoxylvinoxy │  2.25947e5 │  2.25947e5 │  2.14472e6 │
+│       acetylperoxy │ ketene + hydroperoxyl │   1.6013e6 │   1.6013e6 │ -2.67892e6 │
+│ hydroperoxylvinoxy │ ketene + hydroperoxyl │  1.12089e6 │  1.12089e6 │  4.43068e7 │
+│       acetylperoxy │    lactone + hydroxyl │    95628.8 │    95628.8 │ -1.31231e6 │
+│ hydroperoxylvinoxy │    lactone + hydroxyl │  2.73317e6 │  2.73317e6 │  1.66088e7 │
+│          O2+acetyl │          acetylperoxy │  1.29281e8 │  1.30346e8 │  1.48756e8 │
+│          O2+acetyl │    hydroperoxylvinoxy │  1.87338e7 │  1.89045e7 │  2.48507e7 │
+│          O2+acetyl │ ketene + hydroperoxyl │  2.39153e9 │  2.39052e9 │  2.37104e9 │
+│          O2+acetyl │    lactone + hydroxyl │  1.09546e8 │  1.09322e8 │  1.04419e8 │
+│       acetylperoxy │                       │ -1.92287e6 │ -1.92287e6 │  1.84206e6 │
+│ hydroperoxylvinoxy │                       │ -4.93857e6 │ -4.93857e6 │ -2.36876e7 │
+└────────────────────┴───────────────────────┴────────────┴────────────┴────────────┘
 
 
 
 
 T = 1100.0K, p = 1.0bar
-┌────────────────────┬────────────────────┬────────────┬────────────┬─────────────┐
-│           reactant │            product │        CSE │   DST 2(P) │     BT 2(P) │
-├────────────────────┼────────────────────┼────────────┼────────────┼─────────────┤
-│ hydroperoxylvinoxy │       acetylperoxy │   1.9044e6 │   1.9044e6 │  6.88023e10 │
-│       acetylperoxy │ hydroperoxylvinoxy │     4.85e5 │     4.85e5 │  -8.57921e8 │
-│       acetylperoxy │       acetylperoxy │  4.10922e6 │  4.10922e6 │   8.68971e9 │
-│ hydroperoxylvinoxy │ hydroperoxylvinoxy │  2.66288e6 │  2.66288e6 │ -6.67789e10 │
-│       acetylperoxy │             acetyl │  2.64165e5 │  2.64165e5 │   1.12569e9 │
-│ hydroperoxylvinoxy │             acetyl │  6.19557e6 │  6.19557e6 │  -8.64815e9 │
-│       acetylperoxy │             ketene │  7.73909e7 │  7.94218e7 │   8.30469e8 │
-│ hydroperoxylvinoxy │             ketene │  1.25756e7 │  1.29401e7 │   8.23569e7 │
-│          O2+acetyl │       acetylperoxy │  2.43247e9 │  2.43053e9 │    1.7027e9 │
-│          O2+acetyl │ hydroperoxylvinoxy │  1.26426e8 │  1.25977e8 │   3.29755e7 │
-│       acetylperoxy │                    │ -4.85838e6 │ -4.85838e6 │  -8.95317e9 │
-│ hydroperoxylvinoxy │                    │ -1.07628e7 │ -1.07628e7 │   6.59159e9 │
-└────────────────────┴────────────────────┴────────────┴────────────┴─────────────┘
+┌────────────────────┬───────────────────────┬────────────┬────────────┬─────────────┐
+│           reactant │               product │        CSE │   DST 2(P) │     BT 2(P) │
+├────────────────────┼───────────────────────┼────────────┼────────────┼─────────────┤
+│ hydroperoxylvinoxy │          acetylperoxy │   1.9044e6 │   1.9044e6 │  6.88023e10 │
+│       acetylperoxy │    hydroperoxylvinoxy │     4.85e5 │     4.85e5 │  -8.57921e8 │
+│       acetylperoxy │ ketene + hydroperoxyl │  4.10922e6 │  4.10922e6 │   8.68971e9 │
+│ hydroperoxylvinoxy │ ketene + hydroperoxyl │  2.66288e6 │  2.66288e6 │ -6.67789e10 │
+│       acetylperoxy │    lactone + hydroxyl │  2.64165e5 │  2.64165e5 │   1.12569e9 │
+│ hydroperoxylvinoxy │    lactone + hydroxyl │  6.19557e6 │  6.19557e6 │  -8.64815e9 │
+│          O2+acetyl │          acetylperoxy │  7.73909e7 │  7.94218e7 │   8.30469e8 │
+│          O2+acetyl │    hydroperoxylvinoxy │  1.25756e7 │  1.29401e7 │   8.23569e7 │
+│          O2+acetyl │ ketene + hydroperoxyl │  2.43247e9 │  2.43053e9 │    1.7027e9 │
+│          O2+acetyl │    lactone + hydroxyl │  1.26426e8 │  1.25977e8 │   3.29755e7 │
+│       acetylperoxy │                       │ -4.85838e6 │ -4.85838e6 │  -8.95317e9 │
+│ hydroperoxylvinoxy │                       │ -1.07628e7 │ -1.07628e7 │   6.59159e9 │
+└────────────────────┴───────────────────────┴────────────┴────────────┴─────────────┘
 
 
 
 
 T = 1200.0K, p = 1.0bar
-┌────────────────────┬────────────────────┬────────────┬────────────┬─────────────┐
-│           reactant │            product │        CSE │   DST 2(P) │     BT 2(P) │
-├────────────────────┼────────────────────┼────────────┼────────────┼─────────────┤
-│ hydroperoxylvinoxy │       acetylperoxy │  2.86023e6 │  2.86023e6 │  6.06547e10 │
-│       acetylperoxy │ hydroperoxylvinoxy │  8.70965e5 │  8.70965e5 │  -7.79806e8 │
-│       acetylperoxy │       acetylperoxy │  8.42695e6 │  8.42695e6 │   8.83118e9 │
-│ hydroperoxylvinoxy │ hydroperoxylvinoxy │  5.12678e6 │  5.12678e6 │ -5.84623e10 │
-│       acetylperoxy │             acetyl │  5.70121e5 │  5.70121e5 │   1.11415e9 │
-│ hydroperoxylvinoxy │             acetyl │  1.16488e7 │  1.16488e7 │  -7.36988e9 │
-│       acetylperoxy │             ketene │  4.70936e7 │  5.00915e7 │   9.03735e8 │
-│ hydroperoxylvinoxy │             ketene │  8.47184e6 │  9.04734e6 │   8.03614e7 │
-│          O2+acetyl │       acetylperoxy │  2.44868e9 │  2.44579e9 │   1.62365e9 │
-│          O2+acetyl │ hydroperoxylvinoxy │  1.44461e8 │  1.43776e8 │   4.06831e7 │
-│       acetylperoxy │                    │ -9.86804e6 │ -9.86804e6 │  -9.16255e9 │
-│ hydroperoxylvinoxy │                    │ -1.96358e7 │ -1.96358e7 │   5.15771e9 │
-└────────────────────┴────────────────────┴────────────┴────────────┴─────────────┘
+┌────────────────────┬───────────────────────┬────────────┬────────────┬─────────────┐
+│           reactant │               product │        CSE │   DST 2(P) │     BT 2(P) │
+├────────────────────┼───────────────────────┼────────────┼────────────┼─────────────┤
+│ hydroperoxylvinoxy │          acetylperoxy │  2.86023e6 │  2.86023e6 │  6.06547e10 │
+│       acetylperoxy │    hydroperoxylvinoxy │  8.70965e5 │  8.70965e5 │  -7.79806e8 │
+│       acetylperoxy │ ketene + hydroperoxyl │  8.42695e6 │  8.42695e6 │   8.83118e9 │
+│ hydroperoxylvinoxy │ ketene + hydroperoxyl │  5.12678e6 │  5.12678e6 │ -5.84623e10 │
+│       acetylperoxy │    lactone + hydroxyl │  5.70121e5 │  5.70121e5 │   1.11415e9 │
+│ hydroperoxylvinoxy │    lactone + hydroxyl │  1.16488e7 │  1.16488e7 │  -7.36988e9 │
+│          O2+acetyl │          acetylperoxy │  4.70936e7 │  5.00915e7 │   9.03735e8 │
+│          O2+acetyl │    hydroperoxylvinoxy │  8.47184e6 │  9.04734e6 │   8.03614e7 │
+│          O2+acetyl │ ketene + hydroperoxyl │  2.44868e9 │  2.44579e9 │   1.62365e9 │
+│          O2+acetyl │    lactone + hydroxyl │  1.44461e8 │  1.43776e8 │   4.06831e7 │
+│       acetylperoxy │                       │ -9.86804e6 │ -9.86804e6 │  -9.16255e9 │
+│ hydroperoxylvinoxy │                       │ -1.96358e7 │ -1.96358e7 │   5.15771e9 │
+└────────────────────┴───────────────────────┴────────────┴────────────┴─────────────┘
 
 
 
 
 T = 1300.0K, p = 1.0bar
-┌────────────────────┬────────────────────┬────────────┬────────────┬─────────────┐
-│           reactant │            product │        CSE │   DST 2(P) │     BT 2(P) │
-├────────────────────┼────────────────────┼────────────┼────────────┼─────────────┤
-│ hydroperoxylvinoxy │       acetylperoxy │  3.88302e6 │  3.88302e6 │  6.89984e10 │
-│       acetylperoxy │ hydroperoxylvinoxy │  1.38782e6 │  1.38782e6 │  -1.03024e9 │
-│       acetylperoxy │       acetylperoxy │  1.48093e7 │  1.48093e7 │  1.14794e10 │
-│ hydroperoxylvinoxy │ hydroperoxylvinoxy │  8.54963e6 │  8.54963e6 │ -6.63006e10 │
-│       acetylperoxy │             acetyl │  1.04141e6 │  1.04141e6 │   1.50018e9 │
-│ hydroperoxylvinoxy │             acetyl │    1.929e7 │    1.929e7 │  -8.65383e9 │
-│       acetylperoxy │             ketene │  2.92471e7 │   3.2988e7 │    9.0346e8 │
-│ hydroperoxylvinoxy │             ketene │  5.75606e6 │  6.51342e6 │   8.10312e7 │
-│          O2+acetyl │       acetylperoxy │  2.44917e9 │  2.44556e9 │   1.60945e9 │
-│          O2+acetyl │ hydroperoxylvinoxy │  1.64415e8 │  1.63531e8 │   5.44433e7 │
-│       acetylperoxy │                    │ -1.72385e7 │ -1.72385e7 │ -1.19467e10 │
-│ hydroperoxylvinoxy │                    │ -3.17227e7 │ -3.17227e7 │   5.94037e9 │
-└────────────────────┴────────────────────┴────────────┴────────────┴─────────────┘
+┌────────────────────┬───────────────────────┬────────────┬────────────┬─────────────┐
+│           reactant │               product │        CSE │   DST 2(P) │     BT 2(P) │
+├────────────────────┼───────────────────────┼────────────┼────────────┼─────────────┤
+│ hydroperoxylvinoxy │          acetylperoxy │  3.88302e6 │  3.88302e6 │  6.89984e10 │
+│       acetylperoxy │    hydroperoxylvinoxy │  1.38782e6 │  1.38782e6 │  -1.03024e9 │
+│       acetylperoxy │ ketene + hydroperoxyl │  1.48093e7 │  1.48093e7 │  1.14794e10 │
+│ hydroperoxylvinoxy │ ketene + hydroperoxyl │  8.54963e6 │  8.54963e6 │ -6.63006e10 │
+│       acetylperoxy │    lactone + hydroxyl │  1.04141e6 │  1.04141e6 │   1.50018e9 │
+│ hydroperoxylvinoxy │    lactone + hydroxyl │    1.929e7 │    1.929e7 │  -8.65383e9 │
+│          O2+acetyl │          acetylperoxy │  2.92471e7 │   3.2988e7 │    9.0346e8 │
+│          O2+acetyl │    hydroperoxylvinoxy │  5.75606e6 │  6.51342e6 │   8.10312e7 │
+│          O2+acetyl │ ketene + hydroperoxyl │  2.44917e9 │  2.44556e9 │   1.60945e9 │
+│          O2+acetyl │    lactone + hydroxyl │  1.64415e8 │  1.63531e8 │   5.44433e7 │
+│       acetylperoxy │                       │ -1.72385e7 │ -1.72385e7 │ -1.19467e10 │
+│ hydroperoxylvinoxy │                       │ -3.17227e7 │ -3.17227e7 │   5.94037e9 │
+└────────────────────┴───────────────────────┴────────────┴────────────┴─────────────┘
 
 
 
 
 T = 1400.0K, p = 1.0bar
-┌────────────────────┬────────────────────┬────────────┬────────────┬─────────────┐
-│           reactant │            product │        CSE │   DST 2(P) │     BT 2(P) │
-├────────────────────┼────────────────────┼────────────┼────────────┼─────────────┤
-│ hydroperoxylvinoxy │       acetylperoxy │  4.93044e6 │  4.93044e6 │  8.22112e10 │
-│       acetylperoxy │ hydroperoxylvinoxy │  2.03638e6 │  2.03638e6 │   -1.4189e9 │
-│       acetylperoxy │       acetylperoxy │  2.33472e7 │  2.33472e7 │  1.55139e10 │
-│ hydroperoxylvinoxy │ hydroperoxylvinoxy │  1.29054e7 │  1.29054e7 │ -7.86773e10 │
-│       acetylperoxy │             acetyl │  1.69334e6 │  1.69334e6 │   2.11803e9 │
-│ hydroperoxylvinoxy │             acetyl │  2.91661e7 │  2.91661e7 │ -1.07231e10 │
-│       acetylperoxy │             ketene │  1.85449e7 │  2.27335e7 │   9.21472e8 │
-│ hydroperoxylvinoxy │             ketene │   3.9548e6 │  4.84314e6 │   8.35578e7 │
-│          O2+acetyl │       acetylperoxy │  2.43926e9 │   2.4352e9 │   1.57519e9 │
-│          O2+acetyl │ hydroperoxylvinoxy │  1.86742e8 │  1.85719e8 │   6.81322e7 │
-│       acetylperoxy │                    │  -2.7077e7 │  -2.7077e7 │ -1.62105e10 │
-│ hydroperoxylvinoxy │                    │ -4.70019e7 │ -4.70019e7 │   7.17651e9 │
-└────────────────────┴────────────────────┴────────────┴────────────┴─────────────┘
+┌────────────────────┬───────────────────────┬────────────┬────────────┬─────────────┐
+│           reactant │               product │        CSE │   DST 2(P) │     BT 2(P) │
+├────────────────────┼───────────────────────┼────────────┼────────────┼─────────────┤
+│ hydroperoxylvinoxy │          acetylperoxy │  4.93044e6 │  4.93044e6 │  8.22112e10 │
+│       acetylperoxy │    hydroperoxylvinoxy │  2.03638e6 │  2.03638e6 │   -1.4189e9 │
+│       acetylperoxy │ ketene + hydroperoxyl │  2.33472e7 │  2.33472e7 │  1.55139e10 │
+│ hydroperoxylvinoxy │ ketene + hydroperoxyl │  1.29054e7 │  1.29054e7 │ -7.86773e10 │
+│       acetylperoxy │    lactone + hydroxyl │  1.69334e6 │  1.69334e6 │   2.11803e9 │
+│ hydroperoxylvinoxy │    lactone + hydroxyl │  2.91661e7 │  2.91661e7 │ -1.07231e10 │
+│          O2+acetyl │          acetylperoxy │  1.85449e7 │  2.27335e7 │   9.21472e8 │
+│          O2+acetyl │    hydroperoxylvinoxy │   3.9548e6 │  4.84314e6 │   8.35578e7 │
+│          O2+acetyl │ ketene + hydroperoxyl │  2.43926e9 │   2.4352e9 │   1.57519e9 │
+│          O2+acetyl │    lactone + hydroxyl │  1.86742e8 │  1.85719e8 │   6.81322e7 │
+│       acetylperoxy │                       │  -2.7077e7 │  -2.7077e7 │ -1.62105e10 │
+│ hydroperoxylvinoxy │                       │ -4.70019e7 │ -4.70019e7 │   7.17651e9 │
+└────────────────────┴───────────────────────┴────────────┴────────────┴─────────────┘
 
 
 
 
 T = 1500.0K, p = 1.0bar
-┌────────────────────┬────────────────────┬────────────┬────────────┬─────────────┐
-│           reactant │            product │        CSE │   DST 2(P) │     BT 2(P) │
-├────────────────────┼────────────────────┼────────────┼────────────┼─────────────┤
-│ hydroperoxylvinoxy │       acetylperoxy │  5.98199e6 │  5.98199e6 │  9.96484e10 │
-│       acetylperoxy │ hydroperoxylvinoxy │  2.81796e6 │  2.81796e6 │  -1.97399e9 │
-│       acetylperoxy │       acetylperoxy │  3.40229e7 │  3.40229e7 │  2.12082e10 │
-│ hydroperoxylvinoxy │ hydroperoxylvinoxy │  1.81477e7 │  1.81477e7 │ -9.48565e10 │
-│       acetylperoxy │             acetyl │  2.53302e6 │  2.53302e6 │   3.04651e9 │
-│ hydroperoxylvinoxy │             acetyl │  4.12086e7 │  4.12086e7 │ -1.35954e10 │
-│       acetylperoxy │             ketene │  1.19889e7 │  1.63603e7 │   9.53471e8 │
-│ hydroperoxylvinoxy │             ketene │  2.75046e6 │  3.71745e6 │    8.7317e7 │
-│          O2+acetyl │       acetylperoxy │  2.42201e9 │  2.41777e9 │   1.52559e9 │
-│          O2+acetyl │ hydroperoxylvinoxy │  2.11684e8 │  2.10583e8 │   8.19445e7 │
-│       acetylperoxy │                    │ -3.93738e7 │ -3.93738e7 │ -2.22784e10 │
-│ hydroperoxylvinoxy │                    │ -6.53384e7 │ -6.53384e7 │   8.79313e9 │
-└────────────────────┴────────────────────┴────────────┴────────────┴─────────────┘
+┌────────────────────┬───────────────────────┬────────────┬────────────┬─────────────┐
+│           reactant │               product │        CSE │   DST 2(P) │     BT 2(P) │
+├────────────────────┼───────────────────────┼────────────┼────────────┼─────────────┤
+│ hydroperoxylvinoxy │          acetylperoxy │  5.98199e6 │  5.98199e6 │  9.96484e10 │
+│       acetylperoxy │    hydroperoxylvinoxy │  2.81796e6 │  2.81796e6 │  -1.97399e9 │
+│       acetylperoxy │ ketene + hydroperoxyl │  3.40229e7 │  3.40229e7 │  2.12082e10 │
+│ hydroperoxylvinoxy │ ketene + hydroperoxyl │  1.81477e7 │  1.81477e7 │ -9.48565e10 │
+│       acetylperoxy │    lactone + hydroxyl │  2.53302e6 │  2.53302e6 │   3.04651e9 │
+│ hydroperoxylvinoxy │    lactone + hydroxyl │  4.12086e7 │  4.12086e7 │ -1.35954e10 │
+│          O2+acetyl │          acetylperoxy │  1.19889e7 │  1.63603e7 │   9.53471e8 │
+│          O2+acetyl │    hydroperoxylvinoxy │  2.75046e6 │  3.71745e6 │    8.7317e7 │
+│          O2+acetyl │ ketene + hydroperoxyl │  2.42201e9 │  2.41777e9 │   1.52559e9 │
+│          O2+acetyl │    lactone + hydroxyl │  2.11684e8 │  2.10583e8 │   8.19445e7 │
+│       acetylperoxy │                       │ -3.93738e7 │ -3.93738e7 │ -2.22784e10 │
+│ hydroperoxylvinoxy │                       │ -6.53384e7 │ -6.53384e7 │   8.79313e9 │
+└────────────────────┴───────────────────────┴────────────┴────────────┴─────────────┘
 
 
 

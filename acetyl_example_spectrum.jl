@@ -25,7 +25,7 @@ T = readdlm(string(path, "T_", pres, "_", Temp, ".csv"), ',', Float64, header=fa
 idcs = readdlm(string(path, "M_", pres, "_", Temp, "idx.csv"), ',', Float64, header=false)
 
 iso_labels = [:acetylperoxy, :hydroperoxylvinoxy]
-product_labels = [:acetyl, :ketene]
+product_labels = [:lactone, :ketene]
 
 ME, Bin = MasterEquation(M, idcs, B, F, T, iso_labels, product_labels)
 Bin *= scale

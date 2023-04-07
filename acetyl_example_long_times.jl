@@ -69,7 +69,7 @@ for Temp in T_range, Pres in p_range
     idcs = readdlm(string(data_path, "M_", P_name, "_", T_name, "idx.csv"), ',', Float64, header=false)
 
     iso_labels = [:acetylperoxy, :hydroperoxylvinoxy]
-    product_labels = [:acetyl, :ketene]
+    product_labels = [:ketene, :lactone]
 
     ME, Bin = MasterEquation(M, idcs, B, F, T, iso_labels, product_labels)
     Bin *= scale

@@ -24,21 +24,21 @@ for Temp in T_range
     idcs = readdlm(string(path, "M_", pres, "_", Temp, "idx.csv"), ',', Float64, header=false)
 
     iso_labels = [:acetylperoxy, :hydroperoxylvinoxy]
-    product_labels = [:acetyl, :ketene]
+    product_labels = [Symbol("ketene + hydroperoxyl"), Symbol("lactone + hydroxyl")]
     coeff_labels = []
     for i in 1:2, j in 1:2
         if i != j 
             push!(coeff_labels, String(iso_labels[j]) => String(iso_labels[i]))
         end
     end
-    for i in 1:2
-        push!(coeff_labels, String(iso_labels[i]) => String(iso_labels[i]))
-    end
     for i in 1:2, j in 1:2
         push!(coeff_labels, String(iso_labels[j]) => String(product_labels[i]))
     end
     for i in 1:2
         push!(coeff_labels, "O2+acetyl" => String(iso_labels[i]))
+    end
+    for i in 1:2
+        push!(coeff_labels, "O2+acetyl" => String(product_labels[i]))
     end
     for i in 1:2
         push!(coeff_labels, String(iso_labels[i]) => "")
